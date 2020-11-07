@@ -15,12 +15,11 @@
 #
 # Description:
 #
-# Computes canopy height model and canopy cover for TLS and ALS data at varying
-# resolutions using the method from Garcia et al (2011)
+# Computes canopy base height from voxels using the method from Garcia et al (2011)
 #
 # ==============================================================================
 #
-# User inputs:
+# User inputs: - INCOMPLETE -
 #
 # tls_las_folder = Folder location for TLS .las files
 # tls_las_files = list.files function to get tls files to be processed. Can be modified
@@ -37,7 +36,9 @@
 #
 # ==============================================================================
 #
-# Known problems:
+# Current state:
+#
+# Playing with rayshader to make voxel visualizations
 #
 # ==============================================================================
 
@@ -45,136 +46,101 @@ library(lidR)
 library(tidyverse)
 library(glue)
 
+library(rayshader)
+library(plot3D)
+
 # ================================= User inputs ================================
 
-tls_las_folder <- 'D:/c1 - Pepperwood/c1_DEMnorm_las_plot'
-tls_las_files <- list.files(tls_las_folder)
+tls_las_folder <- 'data'
+tls_las_files <- list.files(tls_las_folder, pattern = 'tls')
 
-als_las_folder <- 'D:/c1 - Pepperwood/c1_ALS_normplot'
+# als_las_folder <- 'data'
 
-resolutions <- 1:2
+resolution <- 0.3
 
-out_file <- 'D:/Analyses/output/canopy_grid_metrics.csv'
+# out_file <- 'data/cbh.csv'
 
-# ============= Function for cover and max height (CHM) calculation ============
 
-z_metrics <- function(z) {
-  
-  chm <- max(z, na.rm = TRUE)
-  cover <- sum(z > 1.4)
-  
-  metrics <- list(cover = cover,
-                  chm = chm)
-  
-  return(metrics)
-  
-}
+# ======================== Initiate file name for loop ========================= 
 
-# =================== Function for summarizing grid metrics ====================
+file_name <- tls_las_files[1]
+rm(tls_las_files)
 
-summary_metrics <- function(ras) {
-  
-  ras <- ras %>%
-    as.data.frame()
-  
-  chm_max_height <- max(ras$chm, na.rm = TRUE)
-  chm_mean <- mean(ras$chm, na.rm = TRUE)
-  chm_median <- median(ras$chm, na.rm = TRUE)
-  chm_p95 <- quantile(ras$chm, 0.95, na.rm = TRUE)
-  chm_p99 <- quantile(ras$chm, 0.99, na.rm = TRUE)
-  
-  cover <- sum(ras$cover > 0, na.rm = TRUE) / nrow(ras)
-  
-  metrics <- tibble(chm_max_height, chm_mean, chm_median, chm_p95, chm_p99, cover)
-  
-}
+# for (file_name in tls_las_files) {
 
-# ================== Compute grid metrics for TLS and ALS data =================
+# ================================ Read in files =============================== 
 
-combined_metrics <- matrix(nrow = 0, ncol = 15)
+campaign <- str_extract(file_name, '(?<=c)[:digit:]') %>%
+  as.numeric()
+plot <- str_extract(file_name, '(?<=p)[:digit:]+') %>%
+  as.numeric()
 
-colnames(combined_metrics) <- c(
-  'campaign',
-  'plot',
-  'resolution',
-  'tls_chm_max_height',
-  'tls_chm_mean',
-  'tls_chm_median',
-  'tls_chm_p95',
-  'tls_chm_p99',
-  'tls_cover',
-  'als_chm_max_height',
-  'als_chm_mean',
-  'als_chm_median',
-  'als_chm_p95',
-  'als_chm_p99',
-  'als_cover'
+message('processing campaign ', campaign, ' plot ', plot)
+
+# als_file <- list.files(
+#   als_las_folder,
+#   pattern = glue('c{campaign}_als_p{plot}'),
+#   full.names = TRUE
+# )
+
+tls_file <- list.files(
+  tls_las_folder,
+  pattern = glue('c{campaign}_tls_p{plot}'),  # MODIFIED - NO LONGER CONTAINS PLOT error
+  full.names = TRUE
 )
 
-combined_metrics <- as_tibble(combined_metrics)
+tls_file <- tls_file %>%
+  readLAS(select = '')
+
+# if (length(als_file) == 0) {
+#   als_file = NULL
+# } else {
+#   als_file <- als_file %>%
+#     readLAS(select = '')
+# }
+
+# =========================== Generate 0.3 m voxels ============================ 
+
+tls_voxel <- tls_file %>%
+  voxel_metrics(~length(Z), resolution)
 
 
-for (file_name in tls_las_files) {
-  
-  campaign <- str_extract(file_name, '(?<=c)[:digit:]') %>%
-    as.numeric()
-  plot <- str_extract(file_name, '(?<=p)[:digit:]+') %>%
-    as.numeric()
-  
-  message('processing campaign ', campaign, ' plot ', plot)
-  
-  als_file <- list.files(
-    als_las_folder,
-    pattern = glue('c{campaign}_als_p{plot}'),
-    full.names = TRUE
+
+# ==============================================================================
+# This is where it goes off the rails
+# ==============================================================================
+
+rm(campaign, file_name, plot, resolution, tls_las_folder)
+
+voxel <- tls_voxel %>%
+  transmute(
+    x = X - min(X, na.rm = TRUE),
+    y = Y - min(Y, na.rm = TRUE),
+    z = Z,
+    occupied = V1 > 0,
+    n = V1
   )
-  
-  tls_file <- list.files(
-    tls_las_folder,
-    pattern = glue('c{campaign}_tls_plot_p{plot}'),
-    full.names = TRUE
-  )
-  
-  tls_file <- tls_file %>%
-    readLAS(select = '')
-  
-  if (length(als_file) == 0) {
-    als_file = NULL
-  } else {
-    als_file <- als_file %>%
-      readLAS(select = '')
-  }
-  
-  for (res in resolutions) {
-    
-    message('processing resolution ', res * 100, 'cm')
-    
-    tls_metrics <- tls_file %>%
-      grid_metrics( ~ z_metrics(Z), res) %>%
-      summary_metrics()
-    
-    colnames(tls_metrics) <-
-      paste0('tls_', names(tls_metrics))
-    
-    plot_metrics <- tibble(campaign, plot, resolution_cm = res*100, tls_metrics) 
-    
-    if (!is.null(als_file)) {
-      
-      als_metrics <- als_file %>%
-        grid_metrics( ~ z_metrics(Z), res) %>%
-        summary_metrics()
-      
-      colnames(als_metrics) <-
-        paste0('als_', names(als_metrics))
-      
-      plot_metrics <- plot_metrics %>%
-        add_column(als_metrics)
-      
-    }
-    
-    combined_metrics <- combined_metrics %>%
-      add_row(plot_metrics)
-  }
-}
 
-write.csv(combined_metrics, out_file)
+voxel %>%
+  group_by(occupied) %>%
+  summarize(
+    max = max(n, na.rm = TRUE),
+    min = min(n, na.rm = TRUE)
+  )
+
+voxel3D(x = voxel$X,
+        y = voxel$Y,
+        z = voxel$Z,
+        colvar = voxel[,1:3])
+
+
+
+par(mfrow = c(2, 2), mar  = c(2, 2, 2, 2))
+
+# fast but needs high resolution grid
+xyz <- mesh(voxel$x, voxel$y, voxel$z)
+F <- with(xyz, log(x^2 + y^2 + z^2 + 
+                     10*(x^2 + y^2) * (y^2 + z^2) ^2))
+
+voxel3D(x, y, z, F, level = 2, pch = ".", cex = 5)
+
