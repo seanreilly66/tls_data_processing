@@ -52,7 +52,8 @@ tls_las_files <- list.files(tls_las_folder)
 
 als_las_folder <- 'D:/c1 - Pepperwood/c1_ALS_normplot'
 
-resolutions <- 1:2
+resolutions <- c(seq(0.01,0.05,0.01), seq(0.1,0.5,0.1), 1)
+
 
 out_file <- 'D:/Analyses/output/canopy_grid_metrics.csv'
 
@@ -96,7 +97,7 @@ combined_metrics <- matrix(nrow = 0, ncol = 15)
 colnames(combined_metrics) <- c(
   'campaign',
   'plot',
-  'resolution',
+  'resolution_cm',
   'tls_chm_max_height',
   'tls_chm_mean',
   'tls_chm_median',
