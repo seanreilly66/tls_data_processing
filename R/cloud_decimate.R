@@ -24,6 +24,6 @@ tls_las_file = 'foldername/filename.las'
 
 tls <- readLAS(tls_las_file, filter = '-keep_random_fraction 0.1')
 
-writeLAS(tls, str_replace(tls_las_file, '.las', '_decimated.las'))
+writeLAS(tls, str_replace(tls_las_file, '.las$', '_decimated.las'))
 
 # ==============================================================================
