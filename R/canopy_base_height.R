@@ -46,8 +46,7 @@ library(lidR)
 library(tidyverse)
 library(glue)
 
-library(rayshader)
-library(plot3D)
+library(VoxR)
 
 # ================================= User inputs ================================
 
@@ -102,45 +101,12 @@ tls_file <- tls_file %>%
 # =========================== Generate 0.3 m voxels ============================ 
 
 tls_voxel <- tls_file %>%
-  voxel_metrics(~length(Z), resolution)
+  voxel_metrics(~length(Z), res = 1)
 
+voxel_coord <- tls_voxel %>%
+  transmute(x = X - min(X, na.rm = TRUE),
+         y = Y - min(Y, na.rm = TRUE),
+         z = Z - min(Z, na.rm = TRUE)
+         )
 
-
-# ==============================================================================
-# This is where it goes off the rails
-# ==============================================================================
-
-rm(campaign, file_name, plot, resolution, tls_las_folder)
-
-voxel <- tls_voxel %>%
-  transmute(
-    x = X - min(X, na.rm = TRUE),
-    y = Y - min(Y, na.rm = TRUE),
-    z = Z,
-    occupied = V1 > 0,
-    n = V1
-  )
-
-voxel %>%
-  group_by(occupied) %>%
-  summarize(
-    max = max(n, na.rm = TRUE),
-    min = min(n, na.rm = TRUE)
-  )
-
-voxel3D(x = voxel$X,
-        y = voxel$Y,
-        z = voxel$Z,
-        colvar = voxel[,1:3])
-
-
-
-par(mfrow = c(2, 2), mar  = c(2, 2, 2, 2))
-
-# fast but needs high resolution grid
-xyz <- mesh(voxel$x, voxel$y, voxel$z)
-F <- with(xyz, log(x^2 + y^2 + z^2 + 
-                     10*(x^2 + y^2) * (y^2 + z^2) ^2))
-
-voxel3D(x, y, z, F, level = 2, pch = ".", cex = 5)
-
+plot_voxels(data = voxel_coord, res = resolution*3, lcol = 'black', lwd = 1, fcol = NA)
