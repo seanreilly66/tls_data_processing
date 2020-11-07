@@ -8,4 +8,4 @@ Scripts for TLS and ALS comparison following Garcia et al (2011)
 
 [**cloud_decimate.R**](https://github.com/seanreilly66/tls_data_processing/blob/main/R/cloud_decimate.R): Generates decimated version of point cloud for script testing
 
-[**canopy_base_height.R**](https://github.com/seanreilly66/tls_data_processing/blob/main/R/canopy_base_height.R): Computes CBH using distribution of occupied voxels *Incomplete*
+[**canopy_base_height.R**](https://github.com/seanreilly66/tls_data_processing/blob/main/R/canopy_base_height.R): Computes CBH using distribution of occupied voxels ***Incomplete***
