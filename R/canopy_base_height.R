@@ -32,20 +32,20 @@
 #
 # Package dependences:
 #
-# sp, raster, lidR, tidyverse, glue
+# sp, raster, lidR, tidyverse, glue, ggplot2, VoxR
 #
 # ==============================================================================
 #
 # Current state:
 #
-# Playing with rayshader to make voxel visualizations
+# Working through processing of single file visualizations
 #
 # ==============================================================================
 
 library(lidR)
 library(tidyverse)
 library(glue)
-
+library(ggplot2)
 library(VoxR)
 
 # ================================= User inputs ================================
@@ -97,8 +97,9 @@ if (length(als_file) == 0) {
     readLAS(select = '')
 }
 
-# =========================== Generate 0.3 m voxels ============================ 
+rm(campaign, file_name, plot, tls_las_files, tls_las_folder, als_las_folder)
 
+# =========================== Generate 0.3 m voxels ============================
 
 tls_voxel <- tls_file %>%
   voxel_metrics(~length(Z), res = resolution)
@@ -106,8 +107,7 @@ tls_voxel <- tls_file %>%
 tls_voxel <- tls_voxel %>%
   transmute(x = X - min(X, na.rm = TRUE),
             y = Y - min(Y, na.rm = TRUE),
-            z = Z - min(Z, na.rm = TRUE)
-  )
+            z = Z)
 
 plot_voxels(data = tls_voxel, res = resolution, lcol = 'black', lwd = 0.5, fcol = 'grey95')
 
@@ -117,7 +117,47 @@ als_voxel <- als_file %>%
 als_voxel <- als_voxel %>%
   transmute(x = X - min(X, na.rm = TRUE),
             y = Y - min(Y, na.rm = TRUE),
-            z = Z - min(Z, na.rm = TRUE)
-  )
+            z = Z)
 
 plot_voxels(data = als_voxel, res = resolution, lcol = 'black', lwd = 0.5, fcol = 'grey95')
+
+rm(tls_file, als_file)
+
+# ===================== Plot vertical structure of voxels ======================
+
+tls_vpp <- tls_voxel %>%
+  group_by(z) %>%
+  summarize(
+    n_voxel = n()
+  )
+
+ggplot() +
+  geom_histogram(
+    data = tls_voxel,
+    mapping = aes(y = z),
+    binwidth = 0.3) +
+  geom_point(
+    data = tls_vpp,
+    mapping = aes(
+      x = n_voxel,
+      y = z))
+
+als_vpp <- als_voxel %>%
+  group_by(z) %>%
+  summarize(
+    n_voxel = n()
+  )
+
+ggplot() +
+  geom_histogram(
+    data = als_voxel,
+    mapping = aes(y = z),
+    binwidth = 0.3) +
+  geom_point(
+    data = als_vpp,
+    mapping = aes(
+      x = n_voxel,
+      y = z))
+
+max(tls_voxel$x)
+max(tls_voxel$y)
