@@ -53,17 +53,16 @@ library(VoxR)
 tls_las_folder <- 'data'
 tls_las_files <- list.files(tls_las_folder, pattern = 'tls')
 
-# als_las_folder <- 'data'
+als_las_folder <- 'data'
 
 resolution <- 0.3
 
 # out_file <- 'data/cbh.csv'
 
-
 # ======================== Initiate file name for loop ========================= 
+# Current state: Randomly picks one of the TLS files and does not loop
 
-file_name <- tls_las_files[1]
-rm(tls_las_files)
+file_name <- tls_las_files[ceiling(runif(1, min = 0, max = length(tls_las_files)))]
 
 # for (file_name in tls_las_files) {
 
@@ -76,37 +75,49 @@ plot <- str_extract(file_name, '(?<=p)[:digit:]+') %>%
 
 message('processing campaign ', campaign, ' plot ', plot)
 
-# als_file <- list.files(
-#   als_las_folder,
-#   pattern = glue('c{campaign}_als_p{plot}'),
-#   full.names = TRUE
-# )
+als_file <- list.files(
+  als_las_folder,
+  pattern = glue('c{campaign}.+als.+p{plot}'),
+  full.names = TRUE
+)
 
 tls_file <- list.files(
   tls_las_folder,
-  pattern = glue('c{campaign}_tls_p{plot}'),  # MODIFIED - NO LONGER CONTAINS PLOT error
+  pattern = glue('c{campaign}.+tls.+p{plot}'),
   full.names = TRUE
 )
 
 tls_file <- tls_file %>%
   readLAS(select = '')
 
-# if (length(als_file) == 0) {
-#   als_file = NULL
-# } else {
-#   als_file <- als_file %>%
-#     readLAS(select = '')
-# }
+if (length(als_file) == 0) {
+  als_file = NULL
+} else {
+  als_file <- als_file %>%
+    readLAS(select = '')
+}
 
 # =========================== Generate 0.3 m voxels ============================ 
 
+
 tls_voxel <- tls_file %>%
-  voxel_metrics(~length(Z), res = 1)
+  voxel_metrics(~length(Z), res = resolution)
 
-voxel_coord <- tls_voxel %>%
+tls_voxel <- tls_voxel %>%
   transmute(x = X - min(X, na.rm = TRUE),
-         y = Y - min(Y, na.rm = TRUE),
-         z = Z - min(Z, na.rm = TRUE)
-         )
+            y = Y - min(Y, na.rm = TRUE),
+            z = Z - min(Z, na.rm = TRUE)
+  )
 
-plot_voxels(data = voxel_coord, res = resolution*3, lcol = 'black', lwd = 1, fcol = NA)
+plot_voxels(data = tls_voxel, res = resolution, lcol = 'black', lwd = 0.5, fcol = 'grey95')
+
+als_voxel <- als_file %>%
+  voxel_metrics(~length(Z), res = resolution)
+
+als_voxel <- als_voxel %>%
+  transmute(x = X - min(X, na.rm = TRUE),
+            y = Y - min(Y, na.rm = TRUE),
+            z = Z - min(Z, na.rm = TRUE)
+  )
+
+plot_voxels(data = als_voxel, res = resolution, lcol = 'black', lwd = 0.5, fcol = 'grey95')
