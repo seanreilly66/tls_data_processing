@@ -25,7 +25,9 @@
 # tls_las_files = list.files function to get tls files to be processed. Can be modified
 #   with a pattern to restrict search
 # als_las_folder = Folder location for ALS .las files
-# resolutions = Vector of resolutions (in meters) to use for chm and canopy cover
+# resolution = Vector of resolutions (in meters) to use for chm and canopy cover
+# rolling_window_size = Size (in meters) of window to apply for rolling mean smoothing
+#   of VPP. Should be a multiple of resolution
 # out_file = output .csv file name
 #
 # ==============================================================================
@@ -56,6 +58,7 @@ tls_las_files <- list.files(tls_las_folder, pattern = 'tls')
 als_las_folder <- 'data'
 
 resolution <- 0.3
+rolling_window_size = 0.9
 
 # out_file <- 'data/cbh.csv'
 
@@ -123,41 +126,162 @@ plot_voxels(data = als_voxel, res = resolution, lcol = 'black', lwd = 0.5, fcol 
 
 rm(tls_file, als_file)
 
+# ============================== ggplot theme set =============================== 
+
+theme_set(
+  theme(text = element_text(family = 'serif', face = 'plain'),
+        axis.title = element_text(size = 16),
+        axis.text = element_text(size = 14),
+        line = element_line(size = 1),
+        axis.line = element_line(),
+        panel.background = element_rect(color = 'white'),
+        legend.title = element_text(size = 16),
+        legend.text = element_text(size = 14),
+        legend.key = element_blank(),
+        legend.spacing = unit(0, "cm"),
+        legend.margin = margin(0,5,0,5)
+  )
+)
+
 # ===================== Plot vertical structure of voxels ======================
+
+n_cell_tls = max(tls_voxel$x, na.rm = TRUE) * max(tls_voxel$y, na.rm = TRUE) / resolution^2
 
 tls_vpp <- tls_voxel %>%
   group_by(z) %>%
   summarize(
-    n_voxel = n()
+    n_voxel = n(),
+    p_voxel = n()/n_cell_tls
   )
 
 ggplot() +
   geom_histogram(
     data = tls_voxel,
     mapping = aes(y = z),
-    binwidth = 0.3) +
+    binwidth = resolution) +
   geom_point(
     data = tls_vpp,
     mapping = aes(
       x = n_voxel,
       y = z))
 
+ggplot(
+  data = tls_vpp,
+  mapping = aes(
+    x = p_voxel, 
+    y = z
+    )) +
+  geom_point()
+
+
+n_cell_als = max(als_voxel$x, na.rm = TRUE) * max(als_voxel$y, na.rm = TRUE) / resolution^2
+
 als_vpp <- als_voxel %>%
   group_by(z) %>%
   summarize(
-    n_voxel = n()
+    n_voxel = n(),
+    p_voxel = n()/n_cell_als
   )
 
 ggplot() +
   geom_histogram(
     data = als_voxel,
     mapping = aes(y = z),
-    binwidth = 0.3) +
+    binwidth = resolution) +
   geom_point(
     data = als_vpp,
     mapping = aes(
       x = n_voxel,
       y = z))
 
-max(tls_voxel$x)
-max(tls_voxel$y)
+ggplot(
+  data = als_vpp,
+  mapping = aes(
+    x = p_voxel, 
+    y = z
+  )) +
+  geom_point()
+
+# =================== Rolling average to smooth distribution =================== 
+
+tls_vpp <- tls_vpp %>%
+  mutate(p_smooth = data.table::frollmean(
+    x = p_voxel,
+    n = rolling_window_size/resolution,
+    align = 'center'
+  ))
+
+ggplot(
+  data = tls_vpp %>%
+    arrange(z),
+  mapping = aes( 
+    y = z
+  )) +
+  geom_vline(
+    mapping = aes(xintercept = 0.05),
+    linetype = 'dashed',
+    color = 'grey80',
+    size = 1
+  ) +
+  geom_vline(
+    mapping = aes(xintercept = 0.1),
+    linetype = 'dashed',
+    color = 'grey80',
+    size = 1
+  ) +
+  geom_point(
+    mapping = aes(x = p_voxel),
+    color = 'firebrick',
+    alpha = 0.7,
+    size = 2
+  ) +
+  geom_point(
+    mapping = aes(x = p_smooth),
+    size = 2
+  )+
+  geom_path(
+    mapping = aes(x = p_smooth),
+    size = 1
+  )
+
+
+als_vpp <- als_vpp %>%
+  mutate(p_smooth = data.table::frollmean(
+    x = p_voxel,
+    n = rolling_window_size/resolution,
+    align = 'center'
+  ))
+
+ggplot(
+  data = als_vpp %>%
+    arrange(z),
+  mapping = aes( 
+    y = z
+  )) +
+  geom_vline(
+    mapping = aes(xintercept = 0.05),
+    linetype = 'dashed',
+    color = 'grey80',
+    size = 1
+  ) +
+  geom_vline(
+    mapping = aes(xintercept = 0.1),
+    linetype = 'dashed',
+    color = 'grey80',
+    size = 1
+  ) +
+  geom_point(
+    mapping = aes(x = p_voxel),
+    color = 'firebrick',
+    alpha = 0.7,
+    size = 2
+  ) +
+  geom_point(
+    mapping = aes(x = p_smooth),
+    size = 2
+  )+
+  geom_path(
+    mapping = aes(x = p_smooth),
+    size = 1
+  )
+# ==============================================================================
