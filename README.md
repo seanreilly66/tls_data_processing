@@ -1,10 +1,8 @@
-# TLS data processing scripts
+## TLS data processing scripts
 
 Scripts for TLS and ALS comparison following Garcia et al (2011)
 
-## Table of Contents:
-
-Computes canopy height point cloud based metrics
+### Table of Contents:
 
 [**canopy_base_height.R**](https://github.com/seanreilly66/tls_data_processing/blob/main/R/canopy_base_height.R): Computes CBH using distribution of occupied voxels ***Incomplete***
 
