@@ -88,11 +88,19 @@ write.csv(ta_combined_df, ta_combined_output)
 # ======================== Combine with biomass dataset =========================
 
 bm_df <- read_csv(bm_file) %>%
+<<<<<<< HEAD
   mutate_at('Tag', as.numeric)
 
 ta_combined_df <-  ta_combined_df %>%
   rename(Tag = 'Crown Diameter') %>%
   mutate_at('Tag', as.numeric)
+=======
+  mutate_at('Tag', is.numeric)
+
+ta_combined_df <-  ta_combined_df %>%
+  rename(Tag = 'Crown Diameter') %>%
+  mutate_at('Tag', is.numeric)
+>>>>>>> f5cfcd8d092a54fab0f9a1130b460d10b444b47e
 
 bm_df <- bm_df %>%
   full_join(ta_combined_df, by = 'Tag')
