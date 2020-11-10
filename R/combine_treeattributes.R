@@ -79,7 +79,7 @@ for (ta_file in ta_file_names[-1]) {
     ) %>%
     mutate_at('CBH', as.numeric)  %>%
     add_column('ta_plot' = str_extract(ta_file_names[1], pattern = '(?<=p)[:digit:]+'))
-  
+    
   ta_combined_df <- ta_combined_df %>%
     add_row(ta_single_df)
   
