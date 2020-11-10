@@ -58,7 +58,8 @@ ta_combined_df <- read_csv(ta_file_names[1]) %>%
     'Tree Height',
     CBH,
     Straightness
-  )
+  ) %>%
+  mutate_at('CBH', as.numeric)
 
 for (ta_file in ta_file_names[-1]) {
   ta_single_df <- read_csv(ta_file) %>%
@@ -74,7 +75,8 @@ for (ta_file in ta_file_names[-1]) {
       'Tree Height',
       CBH,
       Straightness
-    )
+    ) %>%
+    mutate_at('CBH', as.numeric)
   
   ta_combined_df <- ta_combined_df %>%
     add_row(ta_single_df)
