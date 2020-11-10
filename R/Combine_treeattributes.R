@@ -8,7 +8,7 @@
 # Last edit by: Sean Reilly
 #
 # ===============================================================================
-# 
+#
 # User inputs:
 #
 # setwd() = The working directory currently is expected to contain a series of files
@@ -24,13 +24,14 @@
 # bm_file <- biomass .csv file name (Located in working directory)
 # bm_output <- biomass and tree attributes combined data output .csv. (Writes to
 #   working directory)
-# 
+#
 # ===============================================================================
 
 library(tidyverse)
 
 # ================================= User inputs =================================
 
+# setwd('data/tree_attributes')
 setwd('~/Desktop/R_code/c1_tree attributes')
 
 ta_file_pattern <- 'c1_tls'
@@ -39,15 +40,41 @@ ta_combined_output <- 'tree_attributes.csv'
 bm_file <- 'Pepperwood_biomass copy.csv'
 bm_output <- 'biomass_attributes.csv'
 
-# ======================== Combine files by column names ======================== 
+# ======================== Combine files by column names ========================
 
-ta_file_names <- list.files(pattern = ta_file_pattern, full.names = 'TRUE')
+ta_file_names <-
+  list.files(pattern = ta_file_pattern, full.names = 'TRUE')
 
-ta_combined_df <- read_csv(ta_file_names[1])
+ta_combined_df <- read_csv(ta_file_names[1]) %>%
+  select(
+    'Tree ID',
+    X,
+    Y,
+    Z,
+    DBH,
+    'Crown Diameter',
+    'Crown Area',
+    'Crown Volume',
+    'Tree Height',
+    CBH,
+    Straightness
+  )
 
 for (ta_file in ta_file_names[-1]) {
-  
-  ta_single_df <- read_csv(ta_file)
+  ta_single_df <- read_csv(ta_file) %>%
+    select(
+      'Tree ID',
+      X,
+      Y,
+      Z,
+      DBH,
+      'Crown Diameter',
+      'Crown Area',
+      'Crown Volume',
+      'Tree Height',
+      CBH,
+      Straightness
+    )
   
   ta_combined_df <- ta_combined_df %>%
     add_row(ta_single_df)
@@ -56,7 +83,7 @@ for (ta_file in ta_file_names[-1]) {
 
 write.csv(ta_combined_df, ta_combined_output)
 
-# ======================== Combine with biomass dataset ========================= 
+# ======================== Combine with biomass dataset =========================
 
 bm_df <- read_csv(bm_file)
 
