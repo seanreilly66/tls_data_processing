@@ -44,7 +44,6 @@ bm_output <- 'biomass_attributes.csv'
 
 ta_file_names <- list.files(pattern = ta_file_pattern,
                             full.names = 'TRUE')
-
 ta_combined_df <- read_csv(ta_file_names[1]) %>%
   select(
     'Tree ID',
@@ -78,7 +77,7 @@ for (ta_file in ta_file_names[-1]) {
       Straightness
     ) %>%
     mutate_at('CBH', as.numeric)  %>%
-    add_column('ta_plot' = str_extract(ta_file_names[1], pattern = '(?<=p)[:digit:]+'))
+    add_column('ta_plot' = str_extract(ta_file, pattern = '(?<=p)[:digit:]+'))
     
   ta_combined_df <- ta_combined_df %>%
     add_row(ta_single_df)
