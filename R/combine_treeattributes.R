@@ -62,7 +62,7 @@ ta_combined_df <- read_csv(ta_file_names[1]) %>%
   mutate_at('CBH', as.numeric) %>%
   add_column('ta_plot' = str_extract(ta_file_names[1], pattern = '(?<=p)[:digit:]+'))
 
-for (ta_file in ta_file_names) {
+for (ta_file in ta_file_names[-1]) {
   ta_single_df <- read_csv(ta_file) %>%
     select(
       'Tree ID',
