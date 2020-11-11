@@ -92,7 +92,7 @@ bm_df <- read_csv(bm_file) %>%
 
 ta_combined_df <-  ta_combined_df %>%
   rename(Tag = 'Crown Diameter') %>%
-  mutate_at('Tag', is.numeric)
+  mutate_at('Tag', as.numeric)
 
 bm_df <- bm_df %>%
   full_join(ta_combined_df, by = 'Tag')
