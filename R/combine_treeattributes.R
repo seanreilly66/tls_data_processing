@@ -44,7 +44,9 @@ bm_output <- 'biomass_attributes.csv'
 ta_file_names <- list.files(pattern = ta_file_pattern,
                             full.names = 'TRUE')
 
-ta_combined_df <- read_csv(ta_file_names) %>%
+
+ta_combined_df <- read_csv(ta_file_names[1]) %>%
+
   select(
     'Tree ID',
     X,
