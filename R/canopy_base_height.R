@@ -28,7 +28,7 @@
 # resolution = Vector of resolutions (in meters) to use for chm and canopy cover
 # rolling_window_size = Size (in meters) of window to apply for rolling mean smoothing
 #   of VPP. Should be a multiple of resolution
-# out_file = output .csv file name
+# vpp_fig_output = folder for vpp graphs to be written to
 #
 # ==============================================================================
 #
@@ -59,9 +59,9 @@ tls_las_files <- list.files(tls_las_folder, pattern = 'tls')
 als_las_folder <- 'data/las'
 
 resolution <- 0.3
-rolling_window_size = 0.9
+rolling_window_size <-  0.9
 
-# out_file <- 'data/cbh.csv'
+vpp_fig_output <- 'figures'
 
 # ======================== Initiate file name for loop =========================
 # Current state: Randomly picks one of the TLS files and does not loop
@@ -229,7 +229,7 @@ for (file_name in tls_las_files) {
   vpp_plot
   
   ggsave(
-    glue('figures/c{campaign}_p{plot}_vpp.png'),
+    glue('{vpp_fig_output}/c{campaign}_p{plot}_vpp.png'),
     width = 4.5,
     height = 4.5,
     units = 'in',
