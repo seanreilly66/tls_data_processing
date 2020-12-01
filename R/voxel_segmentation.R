@@ -52,17 +52,17 @@ library(ggpubr)
 
 plot <- 1301
 
-plot_file <- list.files('data/las',
-                        pattern = glue('tls_p{plot}'),
+plot_file <- list.files('D:/c1 - Pepperwood/c1_DEMnorm_las_plot',
+                        pattern = glue('tls_plot_p{plot}'),
                         full.name = TRUE)
 
-tree_files <- list.files('data/clipped_trees',
+tree_files <- list.files('D:/c1 - Pepperwood/c1_clean_trees_normalized',
                          pattern = glue('tls_p{plot}') ,
                          full.name = TRUE)
 
 res <- 0.3
 
-fig_output <- glue('figures/c1_p{plot}_voxel-segmentation.png')
+fig_output <- glue('D:/Analyses/figures/c1_p{plot}_voxel-segmentation.png')
 
 # ============================= Voxelize las files =============================
 
@@ -115,7 +115,7 @@ theme_set(
 
 max_x <- plot_vox %>%
   filter(Z > 1) %>%
-  select(plot_n_voxel) %>%
+  dplyr::select(plot_n_voxel) %>%
   max(na.rm = TRUE)
 
 distribution_plot <- ggplot(data = plot_vox %>%
