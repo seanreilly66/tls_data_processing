@@ -50,6 +50,7 @@ library(ggpubr)
 
 # ================================= User inputs ================================
 
+# Brieanne's computer
 plot <- 1301
 
 plot_file <- list.files('D:/c1 - Pepperwood/c1_DEMnorm_las_plot',
@@ -64,6 +65,22 @@ res <- 0.3
 
 fig_output <- glue('D:/Analyses/figures/c1_p{plot}_voxel-segmentation.png')
 
+
+# Sean's computer
+# plot <- 1301
+# 
+# plot_file <- list.files('data/las',
+#                         pattern = glue('tls_p{plot}'),
+#                         full.name = TRUE)
+# 
+# tree_files <- list.files('data/clipped_trees',
+#                          pattern = glue('tls_p{plot}') ,
+#                          full.name = TRUE)
+# 
+# res <- 0.3
+# 
+# fig_output <- glue('figures/c1_p{plot}_voxel-segmentation.png')
+
 # ============================= Voxelize las files =============================
 
 plot_vox <- readLAS(plot_file, select = '') %>%
@@ -71,23 +88,21 @@ plot_vox <- readLAS(plot_file, select = '') %>%
   group_by(Z) %>%
   summarize(plot_n_voxel = n())
 
-for (tree_file in tree_files) {
-  
-  tree_vox <- readLAS(tree_file, select = '') %>%
-    voxel_metrics( ~ length(Z), res) %>%
-    group_by(Z) %>%
-    summarize(n_voxel = n()) %>%
-    rename(!!str_extract(tree_file, 'tree[:digit:]+(?=_)') := n_voxel)
-  
-  plot_vox <- plot_vox %>%
-    full_join(tree_vox, by = 'Z')
-  
-}
+tree_vox <- readLAScatalog(tree_files, select = '') %>%
+  catalog_sapply(
+    FUN = function(cluster) {
+      las <- readLAS(cluster)
+      if (is.empty(las))
+        return(NULL)
+      return(las)
+    }
+  ) %>%
+  voxel_metrics( ~ length(Z), res) %>%
+  group_by(Z) %>%
+  summarize(tree_n_voxel = n())
 
 plot_vox <- plot_vox %>%
-  rowwise() %>%
-  mutate(tree_n_voxel = sum(c_across(starts_with('tree')), na.rm = TRUE),
-         .before = 3) %>%
+  full_join(tree_vox, by = 'Z') %>%
   mutate(p_tree_voxel = tree_n_voxel / plot_n_voxel,
          .before = 4)
 
@@ -154,7 +169,7 @@ percentage_plot
 
 full_fig <- ggarrange(
   distribution_plot, percentage_plot,
-  nrow = 1, ncol = 2, widths = c(1, 0.7)) %>%
+  nrow = 1, ncol = 2, widths = c(1, 0.75)) %>%
   annotate_figure(
     top = text_grob(glue('Plot {plot}\n ')
                     , family = 'serif', size = 16))
@@ -163,7 +178,7 @@ full_fig
 
 ggsave(
   fig_output,
-  width = 9,
+  width = 8,
   height = 4.5,
   units = 'in',
   dpi = 700)
