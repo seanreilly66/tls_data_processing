@@ -93,6 +93,27 @@ plot_vox <- readLAS(plot_file, select = '') %>%
 
 tree_vox1 <- readLAS(tree_files, select = '')
 
+
+plot_lasreg <- function(las1, las2, density = 10) {
+  
+  las1 <- las1 %>%
+    lasfilterdecimate(random(density)) %>%
+    lasadddata(rep(1, nrow(.@data)), name = 'file')
+  
+  las2 <- las2 %>%
+    lasfilterdecimate(random(density)) %>%
+    lasadddata(rep(2, nrow(.@data)), name = 'file')
+  
+  rbind(las1, las2) %>%
+    plot(color = 'file')
+  
+}
+
+plot_lasreg(plot_vox, tree_vox1)
+
+
+
+
 tree_vox1 <- tree_vox1 %>%
   voxel_metrics( ~ length(Z), res) 
 
