@@ -102,54 +102,33 @@ tree_vox1 <- tree_vox1 %>%
   group_by(Z) %>%
   summarize(tree_n_voxel = n())
 
-# ==============================================================================
-# Method 2: Maybe less memory intensive? but still robust
-# ==============================================================================
-
-tree_vox2 <- readLAS(tree_files[1], select = '')
-
-for (tree_file in tree_files[-1]) {
-  single_tree <- readLAS(tree_file, select = '')
-
-  tree_vox2 <- rbind(tree_vox2, single_tree) %>%
-    filter_duplicates()
-}
-
-tree_vox2 <- tree_vox2 %>%
-  voxel_metrics( ~ length(Z), res) 
-
-n_vox2 <- nrow(tree_vox2)
-
-tree_vox2 <- tree_vox2 %>%
-  group_by(Z) %>%
-  summarize(tree_n_voxel = n())
 
 # ==============================================================================
 # Method 3: Less memory but maybe less robust?
 # Check it matches upper part of graph
 # ==============================================================================
-
-tree_vox3 <- readLAS(tree_files[1], select = '') %>%
-  voxel_metrics( ~ length(Z), res)
-
-for (tree_file in tree_files) {
-
-  single_tree <- readLAS(tree_file, select = '') %>%
-    voxel_metrics( ~ length(Z), res)
-
-  tree_vox3 <- tree_vox3 %>%
-    add_row(single_tree)
-}
-
-tree_vox3 <- tree_vox3 %>%
-  select(-V1) %>%
-  distinct() 
-
-n_vox3 <- nrow(tree_vox3)
-
-tree_vox3 <- tree_vox3 %>%
-  group_by(Z) %>%
-  summarize(tree_n_voxel = n())
+# 
+# tree_vox3 <- readLAS(tree_files[1], select = '') %>%
+#   voxel_metrics( ~ length(Z), res)
+# 
+#for (tree_file in tree_files) {
+# 
+#   single_tree <- readLAS(tree_file, select = '') %>%
+#     voxel_metrics( ~ length(Z), res)
+# 
+#   tree_vox3 <- tree_vox3 %>%
+#     add_row(single_tree)
+# }
+# 
+# tree_vox3 <- tree_vox3 %>%
+#   dplyr::select(-V1) %>%
+#   distinct() 
+# 
+# n_vox3 <- nrow(tree_vox3)
+# 
+# tree_vox3 <- tree_vox3 %>%
+#   group_by(Z) %>%
+#   summarize(tree_n_voxel = n())
 
 # ==============================================================================
 # Normal script resumes here
@@ -219,7 +198,8 @@ percentage_plot <- ggplot(data = plot_vox %>%
   geom_path(size = 1.5) +
   labs(y = NULL,
        x = 'Percentage tree voxels') +
-  theme(axis.text.y = element_blank())
+  theme(axis.text.y = element_blank()) +
+  coord_cartesian(xlim = c(0, 1))
 
 percentage_plot
 
@@ -232,7 +212,7 @@ full_fig <- ggarrange(
 
 full_fig
 
-ggsave(
+rustggsave(
   fig_output,
   width = 8,
   height = 4.5,
