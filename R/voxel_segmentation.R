@@ -50,7 +50,6 @@ library(ggpubr)
 
 # ================================= User inputs ================================
 
-# Brieanne's computer
 plot <- 1301
 
 plot_file <- list.files('D:/c1 - Pepperwood/c1_DEMnorm_las_plot',
@@ -66,7 +65,7 @@ res <- 0.3
 fig_output <- glue('D:/Analyses/figures/c1_p{plot}_voxel-segmentation.png')
 
 
-# Sean's computer
+# Sean testing inputs # Comment out #
 # plot <- 1301
 # 
 # plot_file <- list.files('data/las',
@@ -88,18 +87,75 @@ plot_vox <- readLAS(plot_file, select = '') %>%
   group_by(Z) %>%
   summarize(plot_n_voxel = n())
 
-tree_vox <- readLAScatalog(tree_files, select = '') %>%
-  catalog_sapply(
-    FUN = function(cluster) {
-      las <- readLAS(cluster)
-      if (is.empty(las))
-        return(NULL)
-      return(las)
-    }
-  ) %>%
-  voxel_metrics( ~ length(Z), res) %>%
+# ==============================================================================
+# Method 1: Memory intensive but simple and robust
+# ==============================================================================
+
+tree_vox1 <- readLAS(tree_files, select = '')
+
+tree_vox1 <- tree_vox1 %>%
+  voxel_metrics( ~ length(Z), res) 
+
+n_vox1 <- nrow(tree_vox1)
+
+tree_vox1 <- tree_vox1 %>%
   group_by(Z) %>%
   summarize(tree_n_voxel = n())
+
+# ==============================================================================
+# Method 2: Maybe less memory intensive? but still robust
+# ==============================================================================
+
+tree_vox2 <- readLAS(tree_files[1], select = '')
+
+for (tree_file in tree_files[-1]) {
+  single_tree <- readLAS(tree_file, select = '')
+
+  tree_vox2 <- rbind(tree_vox2, single_tree) %>%
+    filter_duplicates()
+}
+
+tree_vox2 <- tree_vox2 %>%
+  voxel_metrics( ~ length(Z), res) 
+
+n_vox2 <- nrow(tree_vox2)
+
+tree_vox2 <- tree_vox2 %>%
+  group_by(Z) %>%
+  summarize(tree_n_voxel = n())
+
+# ==============================================================================
+# Method 3: Less memory but maybe less robust?
+# Check it matches upper part of graph
+# ==============================================================================
+
+tree_vox3 <- readLAS(tree_files[1], select = '') %>%
+  voxel_metrics( ~ length(Z), res)
+
+for (tree_file in tree_files) {
+
+  single_tree <- readLAS(tree_file, select = '') %>%
+    voxel_metrics( ~ length(Z), res)
+
+  tree_vox3 <- tree_vox3 %>%
+    add_row(single_tree)
+}
+
+tree_vox3 <- tree_vox3 %>%
+  select(-V1) %>%
+  distinct() 
+
+n_vox3 <- nrow(tree_vox3)
+
+tree_vox3 <- tree_vox3 %>%
+  group_by(Z) %>%
+  summarize(tree_n_voxel = n())
+
+# ==============================================================================
+# Normal script resumes here
+# ==============================================================================
+
+tree_vox <- tree_vox3 # Using output from third method here
 
 plot_vox <- plot_vox %>%
   full_join(tree_vox, by = 'Z') %>%
