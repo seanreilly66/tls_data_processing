@@ -67,21 +67,21 @@ combined_metrics <- tibble(
 
 for (tls_file in tls_las_files) {
   
-  campaign <- str_extract(file_name, '(?<=c)[:digit:]') %>%
+  campaign <- str_extract(tls_file, '(?<=c)[:digit:]') %>%
     as.numeric()
-  plot <- str_extract(file_name, '(?<=p)[:digit:]+') %>%
+  plot <- str_extract(tls_file, '(?<=p)[:digit:]+') %>%
     as.numeric()
   
   message('processing campaign ', campaign, ' plot ', plot)
   
-  tls_file <- tls_file %>%
+  tls_las <- tls_file %>%
     readLAS(select = '')
 
   for (res in resolutions) {
     
     message('processing resolution ', res * 100, ' cm')
     
-    plot_metric <- tls_file %>%
+    plot_metric <- tls_las %>%
       voxel_metrics( ~ length(Z), res) %>%
       filter(Z <= 4) %>%
       summarize(
