@@ -125,36 +125,45 @@ trad <- read_csv(trad_file)
 
 for (i in plot) {
   
-  subtrad <- subset(trad_file, plot==i)
+  subtrad <- subset(trad, plot==i)
   ladder <- subtrad$trad_ladder_fuel
   tls <- subtrad$tls_ladder_fuel
   
-  ggplot(
+  figure <- ggplot(
     data = subset(combined_metrics, plot %in% i) %>%
       mutate_at('plot', as.factor),
     mapping = aes(
       x = resolution_cm,
       y = voxel_ladder_fuel,
-      color = plot
+      color = 'black'
     )) +
     geom_point() +
     geom_line() + 
     geom_hline(
-      mapping = aes(yintercept = ladder),
+      mapping = aes(yintercept = ladder, 
+                    color = 'grey80'),
       linetype = 'dashed',
-      color = 'grey80',
       size = 1
     ) + 
     geom_hline(
-      mapping = aes(yintercept = tls),
+      mapping = aes(yintercept = tls,
+                    color = 'firebrick'),
       linetype = 'dashed',
-      color = 'firebrick',
       size = 1
-    ) 
+    ) +
+    scale_color_identity(
+      name = glue('plot {i}'),
+      breaks = c('grey80', 'firebrick', 'black'),
+      labels = c('photo banner', 'TLS', 'tls voxels'),
+      guide = "legend"
+    )+
+    ylim(0,1)
+  
+  figure
   
   ggsave(
-    glue('{fig_output}/p{plot}_voxel_ladder-fuels.png'),
-    width = 4.5,
+    glue('{fig_output}/p{i}_voxel_ladder-fuels.png'),
+    width = 6.5,
     height = 4.5,
     units = 'in',
     dpi = 700
@@ -162,6 +171,5 @@ for (i in plot) {
   )
   
 }
-
 
 
