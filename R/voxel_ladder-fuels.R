@@ -54,7 +54,7 @@ tls_las_files <- list.files(tls_las_folder, pattern = 'tls', full.names = TRUE)
 resolutions <- c(seq(0.01,0.05,0.01), seq(0.1,0.5,0.1), 1)
 
 # out_file <- 'data/voxel_ladder-fuels.csv'
-out_file <- 'D:/Analyses/output/canopy_grid_metrics.csv'
+out_file <- 'D:/Analyses/output/voxel_ladder-fuels.csv'
 
 # ============ Compute voxel based ladder fuels metrics for TLS data ===========
 
@@ -94,6 +94,6 @@ for (tls_file in tls_las_files) {
   }
 }
 
-write.csv(combined_metrics, out_file)
+ write.csv(combined_metrics, out_file)
 
 # ==============================================================================
