@@ -56,6 +56,8 @@ resolutions <- c(seq(0.01,0.05,0.01), seq(0.1,0.5,0.1), 1)
 # out_file <- 'data/voxel_ladder-fuels.csv'
 out_file <- 'D:/Analyses/output/voxel_ladder-fuels.csv'
 
+trad <- 'D:/Analyses/brie_thesis_parameters.csv'
+
 # ============ Compute voxel based ladder fuels metrics for TLS data ===========
 
 combined_metrics <- tibble(
@@ -113,9 +115,16 @@ theme_set(
         title = element_text(size = 12.8)
   )
 )
+ 
+trad <- read_csv(trad) 
+subtrad <- subset(trad, plot=='1301')
+ladder <- subtrad$trad_ladder_fuel
+tls <- subtrad$tls_ladder_fuel
 
+
+ 
 ggplot(
-  data = combined_metrics %>%
+  data = subset(combined_metrics, plot %in% '1301') %>%
     mutate_at('plot', as.factor),
   mapping = aes(
   x = resolution_cm,
@@ -123,4 +132,22 @@ ggplot(
   color = plot
 )) +
   geom_point() +
-  geom_line()
+  geom_line() + 
+  geom_hline(
+    mapping = aes(yintercept = ladder),
+    linetype = 'dashed',
+    color = 'grey80',
+    size = 1
+  ) + 
+  geom_hline(
+    mapping = aes(yintercept = tls),
+    linetype = 'dashed',
+    color = 'firebrick',
+    size = 1
+  ) 
+
+
+
+
+
+
