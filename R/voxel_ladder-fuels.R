@@ -56,7 +56,11 @@ resolutions <- c(seq(0.01,0.05,0.01), seq(0.1,0.5,0.1), 1)
 # out_file <- 'data/voxel_ladder-fuels.csv'
 out_file <- 'D:/Analyses/output/voxel_ladder-fuels.csv'
 
-trad <- 'D:/Analyses/brie_thesis_parameters.csv'
+trad_file <- 'D:/Analyses/brie_thesis_parameters.csv'
+
+plot <- unique(combined_metrics$plot)
+
+fig_output <- 'D:/Analyses/figures'
 
 # ============ Compute voxel based ladder fuels metrics for TLS data ===========
 
@@ -116,38 +120,48 @@ theme_set(
   )
 )
  
-trad <- read_csv(trad) 
-subtrad <- subset(trad, plot=='1301')
-ladder <- subtrad$trad_ladder_fuel
-tls <- subtrad$tls_ladder_fuel
+trad <- read_csv(trad_file) 
 
 
- 
-ggplot(
-  data = subset(combined_metrics, plot %in% '1301') %>%
-    mutate_at('plot', as.factor),
-  mapping = aes(
-  x = resolution_cm,
-  y = voxel_ladder_fuel,
-  color = plot
-)) +
-  geom_point() +
-  geom_line() + 
-  geom_hline(
-    mapping = aes(yintercept = ladder),
-    linetype = 'dashed',
-    color = 'grey80',
-    size = 1
-  ) + 
-  geom_hline(
-    mapping = aes(yintercept = tls),
-    linetype = 'dashed',
-    color = 'firebrick',
-    size = 1
-  ) 
-
-
-
+for (i in plot) {
+  
+  subtrad <- subset(trad_file, plot==i)
+  ladder <- subtrad$trad_ladder_fuel
+  tls <- subtrad$tls_ladder_fuel
+  
+  ggplot(
+    data = subset(combined_metrics, plot %in% i) %>%
+      mutate_at('plot', as.factor),
+    mapping = aes(
+      x = resolution_cm,
+      y = voxel_ladder_fuel,
+      color = plot
+    )) +
+    geom_point() +
+    geom_line() + 
+    geom_hline(
+      mapping = aes(yintercept = ladder),
+      linetype = 'dashed',
+      color = 'grey80',
+      size = 1
+    ) + 
+    geom_hline(
+      mapping = aes(yintercept = tls),
+      linetype = 'dashed',
+      color = 'firebrick',
+      size = 1
+    ) 
+  
+  ggsave(
+    glue('{fig_output}/p{plot}_voxel_ladder-fuels.png'),
+    width = 4.5,
+    height = 4.5,
+    units = 'in',
+    dpi = 700
+    
+  )
+  
+}
 
 
 
