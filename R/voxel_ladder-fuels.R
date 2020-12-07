@@ -97,3 +97,30 @@ for (tls_file in tls_las_files) {
  write.csv(combined_metrics, out_file)
 
 # ==============================================================================
+
+theme_set(
+  theme(text = element_text(family = 'serif', face = 'plain'),
+        axis.title = element_text(size = 16),
+        axis.text = element_text(size = 14),
+        line = element_line(size = 1),
+        axis.line = element_line(),
+        panel.background = element_rect(color = 'white'),
+        legend.title = element_text(size = 16),
+        legend.text = element_text(size = 14),
+        legend.key = element_blank(),
+        legend.spacing = unit(0, "cm"),
+        legend.margin = margin(0,5,0,5),
+        title = element_text(size = 12.8)
+  )
+)
+
+ggplot(
+  data = combined_metrics %>%
+    mutate_at('plot', as.factor),
+  mapping = aes(
+  x = resolution_cm,
+  y = voxel_ladder_fuel,
+  color = plot
+)) +
+  geom_point() +
+  geom_line()
