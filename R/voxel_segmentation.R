@@ -54,13 +54,19 @@ plot <- 1301
 
 plot_file <- list.files('D:/c1 - Pepperwood/c1_DEMnorm_las_plot',
                         pattern = glue('tls_plot_p{plot}'),
-                        full.name = TRUE)
+                        full.names = TRUE)
+
+plot_shp <- list.files('G:/Shared drives/3DForests/Terrestrial Lidar/c5 - Pepperwood/plot_shapefiles_v2',
+                       pattern = glue('tls_p{plot}.shp'),
+                       full.names = TRUE)
 
 tree_files <- list.files('D:/c1 - Pepperwood/c1_clean_trees_normalized',
                          pattern = glue('tls_p{plot}') ,
-                         full.name = TRUE)
+                         full.names = TRUE)
 
 res <- 0.3
+
+n_voxel <- 2
 
 fig_output <- glue('D:/Analyses/figures/c1_p{plot}_voxel-segmentation.png')
 
@@ -82,8 +88,16 @@ fig_output <- glue('D:/Analyses/figures/c1_p{plot}_voxel-segmentation.png')
 
 # ============================= Voxelize las files =============================
 
-plot_vox <- readLAS(plot_file, select = '') %>%
+plot_vox <- readLAS(plot_file, select = '') 
+
+ext <- extent(plot_vox)
+
+plot_shp <- rgdal::readOGR(plot_shp) %>%
+  spTransform(crs(plot_vox))
+
+plot_vox <- plot_vox %>%
   voxel_metrics(~ length(Z), res) %>%
+  filter(V1 > n_voxel) %>%
   group_by(Z) %>%
   summarize(plot_n_voxel = n())
 
@@ -91,25 +105,28 @@ plot_vox <- readLAS(plot_file, select = '') %>%
 # Method 1: Memory intensive but simple and robust
 # ==============================================================================
 
-tree_vox1 <- readLAS(tree_files, select = '')
+tree_vox1 <- readLAS(tree_files, select = '') %>%
+  clip_roi(plot_shp)
 
+extent(tree_vox1) <- ext
 
-plot_lasreg <- function(las1, las2, density = 10) {
-  
-  las1 <- las1 %>%
-    lasfilterdecimate(random(density)) %>%
-    lasadddata(rep(1, nrow(.@data)), name = 'file')
-  
-  las2 <- las2 %>%
-    lasfilterdecimate(random(density)) %>%
-    lasadddata(rep(2, nrow(.@data)), name = 'file')
-  
-  rbind(las1, las2) %>%
-    plot(color = 'file')
-  
-}
-
-plot_lasreg(plot_vox, tree_vox1)
+# crs(tree_vox1) <- crs(plot_vox)
+# plot_lasreg <- function(las1, las2, density = 10) {
+#   
+#   las1 <- las1 %>%
+#     lasfilterdecimate(random(density)) %>%
+#     lasadddata(rep(1, nrow(.@data)), name = 'file')
+#   
+#   las2 <- las2 %>%
+#     lasfilterdecimate(random(density)) %>%
+#     lasadddata(rep(2, nrow(.@data)), name = 'file')
+#   
+#   rbind(las1, las2) %>%
+#     plot(color = 'file')
+#   
+# }
+# 
+# plot_lasreg(plot_vox, tree_vox1)
 
 
 
@@ -120,6 +137,7 @@ tree_vox1 <- tree_vox1 %>%
 n_vox1 <- nrow(tree_vox1)
 
 tree_vox1 <- tree_vox1 %>%
+  filter(V1 > n_voxel) %>%
   group_by(Z) %>%
   summarize(tree_n_voxel = n())
 
@@ -155,7 +173,7 @@ tree_vox1 <- tree_vox1 %>%
 # Normal script resumes here
 # ==============================================================================
 
-tree_vox <- tree_vox3 # Using output from third method here
+tree_vox <- tree_vox1 # Using output from third method here
 
 plot_vox <- plot_vox %>%
   full_join(tree_vox, by = 'Z') %>%
@@ -232,12 +250,12 @@ full_fig <- ggarrange(
                     , family = 'serif', size = 16))
 
 full_fig
-
-rustggsave(
-  fig_output,
-  width = 8,
-  height = 4.5,
-  units = 'in',
-  dpi = 700)
+# 
+# ggsave(
+#   fig_output,
+#   width = 8,
+#   height = 4.5,
+#   units = 'in',
+#   dpi = 700)
 
 # ==============================================================================

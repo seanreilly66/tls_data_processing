@@ -32,13 +32,13 @@ library(tidyverse)
 # ================================= User inputs =================================
 
 # setwd('data/tree_attributes')
-setwd('~/Desktop/R_code/c1_tree attributes')
+setwd('D:/Analyses/c1_tree attributes')
 
 ta_file_pattern <- 'c1_tls'
-ta_combined_output <- 'tree_attributes.csv'
+ta_combined_output <- 'c1_tls_tree_attributes.csv'
 
-bm_file <- 'Pepperwood_biomass copy.csv'
-bm_output <- 'biomass_attributes.csv'
+bm_file <- 'c1_trad_LBAKcombined.csv'
+bm_output <- 'c1_tls_trad_plotdata_with_tree_attributes_combined.csv'
 
 # ======================== Combine files by column names ========================
 
@@ -51,7 +51,7 @@ ta_combined_df <- read_csv(ta_file_names[1]) %>%
     X,
     Y,
     Z,
-    DBH,
+    'DBH',
     'Crown Diameter',
     'Crown Area',
     'Crown Volume',
