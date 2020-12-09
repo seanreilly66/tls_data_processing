@@ -47,10 +47,11 @@ library(glue)
 
 # ================================= User inputs ================================
 
-# tls_las_folder <- 'data/las'
+tls_las_folder <- 'data/las'
 tls_las_folder <- 'D:/c1 - Pepperwood/c1_DEMnorm_las_plot'
 tls_las_files <- list.files(tls_las_folder, pattern = 'tls', full.names = TRUE)
 
+als_las_folder <- 'data/las'
 als_las_folder <- 'D:/c1 - Pepperwood/c1_ALS_normplot'
 als_las_files <- list.files(als_las_folder, pattern = 'als', full.names = TRUE)
 
@@ -61,12 +62,11 @@ out_file <- 'D:/Analyses/output/voxel_ladder-fuels_201208.csv'
 
 trad_file <- 'D:/Analyses/brie_thesis_parameters.csv'
 
-
 fig_output <- 'D:/Analyses/figures'
 
 # ============ Compute voxel based ladder fuels metrics for TLS data ===========
 
-combined_metrics <- tibble(
+tls_combined_metrics <- tibble(
   campaign = numeric(),
   plot = numeric(),
   tls_voxel_ladder_fuel_1to2 = numeric(),
@@ -74,16 +74,8 @@ combined_metrics <- tibble(
   tls_voxel_ladder_fuel_3to4 = numeric(),
   tls_voxel_ladder_fuel_2to4 = numeric(),
   tls_voxel_ladder_fuel_1to4 = numeric(),
-  tls_voxel_ladder_fuel_1to8 = numeric(),
-  als_voxel_ladder_fuel_1to2 = numeric(),
-  als_voxel_ladder_fuel_2to3 = numeric(),
-  als_voxel_ladder_fuel_3to4 = numeric(),
-  als_voxel_ladder_fuel_2to4 = numeric(),
-  als_voxel_ladder_fuel_1to4 = numeric(),
-  als_voxel_ladder_fuel_1to8 = numeric()
-  
+  tls_voxel_ladder_fuel_1to8 = numeric()
 )
-
 
 for (tls_file in tls_las_files) {
   
@@ -96,62 +88,36 @@ for (tls_file in tls_las_files) {
   
   tls_las <- tls_file %>%
     readLAS(select = '')
-
-  tls_plot_metric_a <- tls_las %>%
-    voxel_metrics( ~ length(Z), res) %>%
-    filter(Z <= 2) %>%
+  
+  tls_plot_metric <- tls_las %>%
+    voxel_metrics(~ length(Z), res) %>%
     summarize(
-      tls_voxel_ladder_fuel_1to2 = sum(Z > 1)/n()
+      tls_voxel_ladder_fuel_1to2 = sum(Z > 1 & Z <= 2) / sum(Z <= 2),
+      tls_voxel_ladder_fuel_2to3 = sum(Z > 2 & Z <= 3) / sum(Z <= 3),
+      tls_voxel_ladder_fuel_3to4 = sum(Z > 3 & Z <= 4) / sum(Z <= 4),
+      tls_voxel_ladder_fuel_2to4 = sum(Z > 2 & Z <= 4) / sum(Z <= 4),
+      tls_voxel_ladder_fuel_1to4 = sum(Z > 1 & Z <= 4) / sum(Z <= 4),
+      tls_voxel_ladder_fuel_1to8 = sum(Z > 1 & Z <= 8) / sum(Z <= 8)
     ) %>%
-    add_column(campaign, plot)
+    add_column(campaign, plot, .before = 1)
   
-  tls_plot_metric_b <- tls_las %>%
-    voxel_metrics( ~ length(Z), res) %>%
-    filter(Z <= 3) %>%
-    summarize(
-      tls_voxel_ladder_fuel_2to3 = sum(Z > 2)/n()
-    ) 
-  
-  tls_plot_metric_c <- tls_las %>%
-    voxel_metrics( ~ length(Z), res) %>%
-    filter(Z <= 4) %>%
-    summarize(
-      tls_voxel_ladder_fuel_3to4 = sum(Z > 3)/n()
-    )
-  
-  tls_plot_metric_d <- tls_las %>%
-    voxel_metrics( ~ length(Z), res) %>%
-    filter(Z <= 4) %>%
-    summarize(
-      tls_voxel_ladder_fuel_2to4 = sum(Z > 2)/n()
-    ) 
-    
-  tls_plot_metric_e <- tls_las %>%
-    voxel_metrics( ~ length(Z), res) %>%
-    filter(Z <= 4) %>%
-    summarize(
-      tls_voxel_ladder_fuel_1to4 = sum(Z > 1)/n()
-    )
-  
-  tls_plot_metric_f <- tls_las %>%
-    voxel_metrics( ~ length(Z), res) %>%
-    filter(Z <= 8) %>%
-    summarize(
-      tls_voxel_ladder_fuel_1to8 = sum(Z > 1)/n()
-    ) 
-  
-  
-  
-
-  
-  tls_metrics <- bind_cols(tls_plot_metric_a, 
-            tls_plot_metric_b, 
-            tls_plot_metric_c, 
-            tls_plot_metric_d, 
-            tls_plot_metric_e, 
-            tls_plot_metric_f)
+  tls_combined_metrics <- tls_combined_metrics %>%
+    add_row(tls_plot_metric)
   
 }
+
+# ============ Compute voxel based ladder fuels metrics for ALS data ===========
+
+als_combined_metrics <- tibble(
+  campaign = numeric(),
+  plot = numeric(),
+  als_voxel_ladder_fuel_1to2 = numeric(),
+  als_voxel_ladder_fuel_2to3 = numeric(),
+  als_voxel_ladder_fuel_3to4 = numeric(),
+  als_voxel_ladder_fuel_2to4 = numeric(),
+  als_voxel_ladder_fuel_1to4 = numeric(),
+  als_voxel_ladder_fuel_1to8 = numeric()
+)
 
 for (als_file in als_las_files) {
   
@@ -160,86 +126,33 @@ for (als_file in als_las_files) {
   plot <- str_extract(als_file, '(?<=p)[:digit:]+') %>%
     as.numeric()
   
-  message('processing ALS campaign ', campaign, ' plot ', plot)
+  message('processing als campaign ', campaign, ' plot ', plot)
   
   als_las <- als_file %>%
     readLAS(select = '')
   
-  als_plot_metric_a <- als_las %>%
-    voxel_metrics( ~ length(Z), res) %>%
-    filter(Z <= 2) %>%
+  als_plot_metric <- als_las %>%
+    voxel_metrics(~ length(Z), res) %>%
     summarize(
-      als_voxel_ladder_fuel_1to2 = sum(Z > 1)/n()
+      als_voxel_ladder_fuel_1to2 = sum(Z > 1 & Z <= 2) / sum(Z <= 2),
+      als_voxel_ladder_fuel_2to3 = sum(Z > 2 & Z <= 3) / sum(Z <= 3),
+      als_voxel_ladder_fuel_3to4 = sum(Z > 3 & Z <= 4) / sum(Z <= 4),
+      als_voxel_ladder_fuel_2to4 = sum(Z > 2 & Z <= 4) / sum(Z <= 4),
+      als_voxel_ladder_fuel_1to4 = sum(Z > 1 & Z <= 4) / sum(Z <= 4),
+      als_voxel_ladder_fuel_1to8 = sum(Z > 1 & Z <= 8) / sum(Z <= 8)
     ) %>%
-    add_column(campaign, plot)
+    add_column(campaign, plot, .before = 1)
   
-  als_plot_metric_b <- als_las %>%
-    voxel_metrics( ~ length(Z), res) %>%
-    filter(Z <= 3) %>%
-    summarize(
-      als_voxel_ladder_fuel_2to3 = sum(Z > 2)/n()
-    ) 
-  
-  als_plot_metric_c <- als_las %>%
-    voxel_metrics( ~ length(Z), res) %>%
-    filter(Z <= 4) %>%
-    summarize(
-      als_voxel_ladder_fuel_3to4 = sum(Z > 3)/n()
-    )
-  
-  als_plot_metric_d <- als_las %>%
-    voxel_metrics( ~ length(Z), res) %>%
-    filter(Z <= 4) %>%
-    summarize(
-      als_voxel_ladder_fuel_2to4 = sum(Z > 2)/n()
-    ) 
-  
-  als_plot_metric_e <- als_las %>%
-    voxel_metrics( ~ length(Z), res) %>%
-    filter(Z <= 4) %>%
-    summarize(
-      als_voxel_ladder_fuel_1to4 = sum(Z > 1)/n()
-    )
-  
-  als_plot_metric_f <- tls_las %>%
-    voxel_metrics( ~ length(Z), res) %>%
-    filter(Z <= 8) %>%
-    summarize(
-      als_voxel_ladder_fuel_1to8 = sum(Z > 1)/n()
-    ) 
-  
-  
-  
-  
-  
-  als_metrics <- bind_cols(als_plot_metric_a, 
-                           als_plot_metric_b,
-                           als_plot_metric_c, 
-                           als_plot_metric_d,
-                           als_plot_metric_e,
-                           als_plot_metric_f)
+  als_combined_metrics <- als_combined_metrics %>%
+    add_row(als_plot_metric)
   
 }
   
-join <- left_join(tls_metrics, als_metrics, by=c('campaign','plot'))
+combined_metrics <- full_join(tls_combined_metrics, als_combined_metrics, by = c('campaign','plot'))
 
-combined_metrics <- combined_metrics%>%
-  add_row(join)
-  
+write.csv(combined_metrics, out_file)
 
 
-
-
-  
-
-
-
- write.csv(combined_metrics, out_file)
-
-
-
- 
- 
 # ==============================================================================
 # 
 # theme_set(
