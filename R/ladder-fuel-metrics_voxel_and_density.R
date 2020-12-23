@@ -52,7 +52,7 @@ tls_las_files <- list.files(tls_las_folder, pattern = 'tls', full.names = TRUE)
 res <- 0.2
 
 # out_file <- 'data/voxel_ladder-fuels.csv'
-out_file <- 'D:/Analyses/output/c1_ladder-fuels_metrics_201212.csv'
+out_file <- 'D:/Analyses/output/c1_ladder-fuels_metrics_201223.csv'
 
 # ============ Compute density based ladder fuels metrics for TLS data ===========
 
@@ -87,39 +87,22 @@ tls_combine_density <- tibble(
   tls_density_ladder_fuel_4to8 = numeric(),
   tls_density_ladder_fuel_5to8 = numeric(),
   tls_density_ladder_fuel_6to8 = numeric(),
-  tls_density_ladder_fuel_7to8 = numeric(),
-  tls_density_ladder_fuel_1to9 = numeric(),
-  tls_density_ladder_fuel_2to9 = numeric(),
-  tls_density_ladder_fuel_3to9 = numeric(),
-  tls_density_ladder_fuel_4to9 = numeric(),
-  tls_density_ladder_fuel_5to9 = numeric(),
-  tls_density_ladder_fuel_6to9 = numeric(),
-  tls_density_ladder_fuel_7to9 = numeric(),
-  tls_density_ladder_fuel_8to9 = numeric(),
-  tls_density_ladder_fuel_1to10 = numeric(),
-  tls_density_ladder_fuel_2to10 = numeric(),
-  tls_density_ladder_fuel_3to10 = numeric(),
-  tls_density_ladder_fuel_4to10 = numeric(),
-  tls_density_ladder_fuel_5to10 = numeric(),
-  tls_density_ladder_fuel_6to10 = numeric(),
-  tls_density_ladder_fuel_7to10 = numeric(),
-  tls_density_ladder_fuel_8to10 = numeric(),
-  tls_density_ladder_fuel_9to10 = numeric()
+  tls_density_ladder_fuel_7to8 = numeric()
 )
 
-for (tls_file in tls_las_files) {
+for (tls_density_file in tls_las_files) {
   
-  campaign <- str_extract(tls_file, '(?<=c)[:digit:]') %>%
+  campaign <- str_extract(tls_density_file, '(?<=c)[:digit:]') %>%
     as.numeric()
-  plot <- str_extract(tls_file, '(?<=p)[:digit:]+') %>%
+  plot <- str_extract(tls_density_file, '(?<=p)[:digit:]+') %>%
     as.numeric()
   
-  message('processing TLS campaign ', campaign, ' plot ', plot)
+  message('processing density TLS campaign ', campaign, ' plot ', plot)
   
-  tls_las <- tls_file %>%
+  tls_density_las <- tls_density_file %>%
     readLAS(select = '')
   
-  tls_density_metric <- as_tibble(tls_las$Z) %>% 
+  tls_density_metric <- as_tibble(tls_density_las$Z) %>% 
     rename(Z='value') %>%
     summarize(
       tls_density_ladder_fuel_1to2 = sum(Z > 1 & Z <= 2) / sum(Z <= 2),
@@ -149,24 +132,7 @@ for (tls_file in tls_las_files) {
       tls_density_ladder_fuel_4to8 = sum(Z > 4 & Z <= 8) / sum(Z <= 8),
       tls_density_ladder_fuel_5to8 = sum(Z > 5 & Z <= 8) / sum(Z <= 8),
       tls_density_ladder_fuel_6to8 = sum(Z > 6 & Z <= 8) / sum(Z <= 8),
-      tls_density_ladder_fuel_7to8 = sum(Z > 7 & Z <= 8) / sum(Z <= 8),
-      tls_density_ladder_fuel_1to9 = sum(Z > 1 & Z <= 9) / sum(Z <= 9),
-      tls_density_ladder_fuel_2to9 = sum(Z > 2 & Z <= 9) / sum(Z <= 9),
-      tls_density_ladder_fuel_3to9 = sum(Z > 3 & Z <= 9) / sum(Z <= 9),
-      tls_density_ladder_fuel_4to9 = sum(Z > 4 & Z <= 9) / sum(Z <= 9),
-      tls_density_ladder_fuel_5to9 = sum(Z > 5 & Z <= 9) / sum(Z <= 9),
-      tls_density_ladder_fuel_6to9 = sum(Z > 6 & Z <= 9) / sum(Z <= 9),
-      tls_density_ladder_fuel_7to9 = sum(Z > 7 & Z <= 9) / sum(Z <= 9),
-      tls_density_ladder_fuel_8to9 = sum(Z > 8 & Z <= 9) / sum(Z <= 9),
-      tls_density_ladder_fuel_1to10 = sum(Z > 1 & Z <= 10) / sum(Z <= 10),
-      tls_density_ladder_fuel_2to10 = sum(Z > 2 & Z <= 10) / sum(Z <= 10),
-      tls_density_ladder_fuel_3to10 = sum(Z > 3 & Z <= 10) / sum(Z <= 10),
-      tls_density_ladder_fuel_4to10 = sum(Z > 4 & Z <= 10) / sum(Z <= 10),
-      tls_density_ladder_fuel_5to10 = sum(Z > 5 & Z <= 10) / sum(Z <= 10),
-      tls_density_ladder_fuel_6to10 = sum(Z > 6 & Z <= 10) / sum(Z <= 10),
-      tls_density_ladder_fuel_7to10 = sum(Z > 7 & Z <= 10) / sum(Z <= 10),
-      tls_density_ladder_fuel_8to10 = sum(Z > 8 & Z <= 10) / sum(Z <= 10),
-      tls_density_ladder_fuel_9to10 = sum(Z > 9 & Z <= 10) / sum(Z <= 10)
+      tls_density_ladder_fuel_7to8 = sum(Z > 7 & Z <= 8) / sum(Z <= 8)
     ) %>%
     add_column(campaign, plot, .before = 1)
   
@@ -207,37 +173,22 @@ tls_combine_voxel <- tibble(
   tls_voxel_ladder_fuel_4to8 = numeric(),
   tls_voxel_ladder_fuel_5to8 = numeric(),
   tls_voxel_ladder_fuel_6to8 = numeric(),
-  tls_voxel_ladder_fuel_7to8 = numeric(),
-  tls_voxel_ladder_fuel_1to9 = numeric(),
-  tls_voxel_ladder_fuel_2to9 = numeric(),
-  tls_voxel_ladder_fuel_3to9 = numeric(),
-  tls_voxel_ladder_fuel_4to9 = numeric(),
-  tls_voxel_ladder_fuel_5to9 = numeric(),
-  tls_voxel_ladder_fuel_6to9 = numeric(),
-  tls_voxel_ladder_fuel_7to9 = numeric(),
-  tls_voxel_ladder_fuel_8to9 = numeric(),
-  tls_voxel_ladder_fuel_1to10 = numeric(),
-  tls_voxel_ladder_fuel_2to10 = numeric(),
-  tls_voxel_ladder_fuel_3to10 = numeric(),
-  tls_voxel_ladder_fuel_4to10 = numeric(),
-  tls_voxel_ladder_fuel_5to10 = numeric(),
-  tls_voxel_ladder_fuel_6to10 = numeric(),
-  tls_voxel_ladder_fuel_7to10 = numeric(),
-  tls_voxel_ladder_fuel_8to10 = numeric(),
-  tls_voxel_ladder_fuel_9to10 = numeric()
+  tls_voxel_ladder_fuel_7to8 = numeric()
 )
 
-for (tls_file in tls_las_files) {
+for (tls_voxel_file in tls_las_files) {
   
-  campaign <- str_extract(tls_file, '(?<=c)[:digit:]') %>%
+  campaign <- str_extract(tls_voxel_file, '(?<=c)[:digit:]') %>%
     as.numeric()
-  plot <- str_extract(tls_file, '(?<=p)[:digit:]+') %>%
+  plot <- str_extract(tls_voxel_file, '(?<=p)[:digit:]+') %>%
     as.numeric()
   
   message('processing voxel campaign ', campaign, ' plot ', plot)
   
+  tls_voxel_las <- tls_voxel_file %>%
+    readLAS(select = '')
   
-  tls_voxel_metric <- tls_las %>%
+  tls_voxel_metric <- tls_voxel_las %>%
     voxel_metrics(~ length(Z), res) %>%
     summarize(
       tls_voxel_ladder_fuel_1to2 = sum(Z > 1 & Z <= 2) / sum(Z <= 2),
@@ -267,24 +218,7 @@ for (tls_file in tls_las_files) {
       tls_voxel_ladder_fuel_4to8 = sum(Z > 4 & Z <= 8) / sum(Z <= 8),
       tls_voxel_ladder_fuel_5to8 = sum(Z > 5 & Z <= 8) / sum(Z <= 8),
       tls_voxel_ladder_fuel_6to8 = sum(Z > 6 & Z <= 8) / sum(Z <= 8),
-      tls_voxel_ladder_fuel_7to8 = sum(Z > 7 & Z <= 8) / sum(Z <= 8),
-      tls_voxel_ladder_fuel_1to9 = sum(Z > 1 & Z <= 9) / sum(Z <= 9),
-      tls_voxel_ladder_fuel_2to9 = sum(Z > 2 & Z <= 9) / sum(Z <= 9),
-      tls_voxel_ladder_fuel_3to9 = sum(Z > 3 & Z <= 9) / sum(Z <= 9),
-      tls_voxel_ladder_fuel_4to9 = sum(Z > 4 & Z <= 9) / sum(Z <= 9),
-      tls_voxel_ladder_fuel_5to9 = sum(Z > 5 & Z <= 9) / sum(Z <= 9),
-      tls_voxel_ladder_fuel_6to9 = sum(Z > 6 & Z <= 9) / sum(Z <= 9),
-      tls_voxel_ladder_fuel_7to9 = sum(Z > 7 & Z <= 9) / sum(Z <= 9),
-      tls_voxel_ladder_fuel_8to9 = sum(Z > 8 & Z <= 9) / sum(Z <= 9),
-      tls_voxel_ladder_fuel_1to10 = sum(Z > 1 & Z <= 10) / sum(Z <= 10),
-      tls_voxel_ladder_fuel_2to10 = sum(Z > 2 & Z <= 10) / sum(Z <= 10),
-      tls_voxel_ladder_fuel_3to10 = sum(Z > 3 & Z <= 10) / sum(Z <= 10),
-      tls_voxel_ladder_fuel_4to10 = sum(Z > 4 & Z <= 10) / sum(Z <= 10),
-      tls_voxel_ladder_fuel_5to10 = sum(Z > 5 & Z <= 10) / sum(Z <= 10),
-      tls_voxel_ladder_fuel_6to10 = sum(Z > 6 & Z <= 10) / sum(Z <= 10),
-      tls_voxel_ladder_fuel_7to10 = sum(Z > 7 & Z <= 10) / sum(Z <= 10),
-      tls_voxel_ladder_fuel_8to10 = sum(Z > 8 & Z <= 10) / sum(Z <= 10),
-      tls_voxel_ladder_fuel_9to10 = sum(Z > 9 & Z <= 10) / sum(Z <= 10)
+      tls_voxel_ladder_fuel_7to8 = sum(Z > 7 & Z <= 8) / sum(Z <= 8)
       ) %>%
     add_column(campaign, plot, .before = 1)
   
