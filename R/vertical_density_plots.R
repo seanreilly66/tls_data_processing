@@ -52,9 +52,11 @@ library(ggpubr)
 
 # ================================= User inputs ================================
 
-tls_las_folder <- 'D:/c1 - Pepperwood/c1_DEMnorm_las_plot/p1301'
+# tls_las_folder <- 'D:/c1 - Pepperwood/c1_DEMnorm_las_plot/p1301'
+tls_las_folder <- 'data/las/tls'
 
-als_las_folder <- 'D:/c1 - Pepperwood/c1_ALS_normplot/p1301'
+# als_las_folder <- 'D:/c1 - Pepperwood/c1_ALS_normplot/p1301'
+als_las_folder <- 'data/las/als'
 
 uas_las_folder <-  'D:/c1 - Pepperwood/c1_ALS_normplot/p1301'
   
@@ -107,7 +109,6 @@ transect <- tibble(
   method = as.character(),
   plot = as.character()
 )
-
 
 for (plot_type in c('high_plot', 'medium_plot', 'low_plot', 'eight_plot')) {
   
@@ -221,15 +222,14 @@ for (plot_type in c('high_plot', 'medium_plot', 'low_plot', 'eight_plot')) {
       align = 'center'))
 
   rm(uas)
+
   
   # ALS
   als <- list.files(als_las_folder,
                pattern = glue('p{plot}'),
                full.names = TRUE) %>%
     readLAS(select = '')
-  
-  als_min <-  as.numeric(als@bbox[, 1])
-  
+
   als_transect <- clip_transect(
     als,
     p1 = p_min,
@@ -258,10 +258,17 @@ for (plot_type in c('high_plot', 'medium_plot', 'low_plot', 'eight_plot')) {
   rm(als)
 
   transect <- transect %>%
-    add_row(tls_transect, zeb_transect, uas_transect, als_transect)
+    add_row(tls_transect) %>%
+    add_row(als_transect) %>%
+    add_row(zeb_transect) %>%
+    add_row(uas_transect)
+  
   z <- z %>%
-    add_row(tls_z, zeb_z, uas_z, als_z)
-
+    add_row(tls_z) %>%
+    add_row(als_z) %>%
+    add_row(zeb_z) %>%
+    add_row(uas_z)
+  
 }
 
 
