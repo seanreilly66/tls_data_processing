@@ -56,17 +56,17 @@ tls_las_files <- list.files(tls_las_folder, pattern = 'tls', full.names = TRUE)
 als_las_folder <- 'D:/c1 - Pepperwood/c1_ALS_normplot'
 als_las_files <- list.files(als_las_folder, pattern = 'als', full.names = TRUE)
 
-uav_las_folder <- 'D:/c1 - Pepperwood/c1_uas'
-uav_las_files <- list.files(uav_las_folder, pattern = 'uas', full.names = TRUE)
+uav_las_folder <- 'D:/c6 - Saddle Mtn/c6_uas'
+uav_las_files <- list.files(uav_las_folder, pattern = 'c6', full.names = TRUE)
 
 zeb_las_folder <- 'D:/c1 - Pepperwood/c1_zeb_cut2plot'
 zeb_las_files <- list.files(zeb_las_folder, pattern = 'zeb', full.names = TRUE)
 
-banner_data <- 'D:/c1 - Pepperwood/c1_DEMnorm_las_plot'
+banner_data <- read_csv('D:/Analyses/Ladder fuels-airtable.csv')
 
 
 # out_file <- 'data/voxel_ladder-fuels.csv'
-out_file <- 'D:/Analyses/output/c1_ladder-fuels_metrics_201230.csv'
+out_file <- 'D:/Analyses/output/c6_ladder-fuels_metrics_uas_210127.csv'
 
 # ============ Compute density based ladder fuels metrics for TLS data ===========
 
@@ -177,11 +177,11 @@ for (uav_file in uav_las_files) {
   uav_metric <- as_tibble(uav_las$Z) %>% 
     rename(Z='value') %>%
     summarize(
-      uav_ladder_fuel_1to2 = sum(Z > 1 & Z <= 2) / sum(Z <= 2),
-      uav_ladder_fuel_1to3 = sum(Z > 1 & Z <= 3) / sum(Z <= 3),
-      uav_ladder_fuel_1to4 = sum(Z > 1 & Z <= 4) / sum(Z <= 4),
-      uav_ladder_fuel_1to5 = sum(Z > 1 & Z <= 5) / sum(Z <= 5),
-      uav_ladder_fuel_7to8 = sum(Z > 7 & Z <= 8) / sum(Z <= 8)
+      uav_ladder_fuel_1to2 = sum(Z > 1 & Z <= 2) / sum(uav_las$Z> 0 & uav_las$Z <= 2),
+      uav_ladder_fuel_1to3 = sum(Z > 1 & Z <= 3) / sum(uav_las$Z > 0 & uav_las$Z <= 3),
+      uav_ladder_fuel_1to4 = sum(Z > 1 & Z <= 4) / sum(uav_las$Z > 0 & uav_las$Z <= 4),
+      uav_ladder_fuel_1to5 = sum(Z > 1 & Z <= 5) / sum(uav_las$Z > 0 & uav_las$Z <= 5),
+      uav_ladder_fuel_7to8 = sum(Z > 7 & Z <= 8) / sum(uav_las$Z > 0 & uav_las$Z <= 8)
     ) %>%
     add_column(campaign, plot, .before = 1)
   
@@ -232,15 +232,26 @@ for (zeb_file in zeb_las_files) {
 }
 # ================================= banner data ================================
 
+banner_data$Plot <- stringr::str_replace(banner_data$Plot, 'p', '') 
 
 
+banner_summary <- banner_data %>%
+  group_by(Plot) %>%
+  summarize(
+    trad_ladder_fuel_1to2 = mean(trad_ladder_fuel_1to2, na.rm = TRUE),
+    trad_ladder_fuel_1to3 = mean(trad_ladder_fuel_1to3, na.rm = TRUE),
+    trad_ladder_fuel_1to4 = mean(trad_ladder_fuel_1to4, na.rm = TRUE)
+  ) %>%
+  rename(plot=Plot) %>%
+  mutate_at('plot', as.numeric)
 
 # ==============================================================================
 
 combined_metrics <- tls_combine %>%
   full_join(als_combine, by = c('campaign','plot')) %>%
   full_join(zeb_combine, by = c('campaign','plot')) %>%
-  full_join(uav_combine, by = c('campaign','plot')) 
+  full_join(uav_combine, by = c('campaign','plot')) %>%
+  full_join(banner_summary, by = 'plot')
 
 
 write.csv(combined_metrics, out_file)
@@ -248,4 +259,4 @@ write.csv(combined_metrics, out_file)
 
 # ==============================================================================
 
-
+write.csv(uav_combine, out_file)
