@@ -52,164 +52,258 @@ library(ggpubr)
 
 # ================================= User inputs ================================
 
-tls_las_folder <- 'D:/c1 - Pepperwood/c1_DEMnorm_las_plot/p1301'
+# tls_las_folder <- 'D:/c1 - Pepperwood/c1_DEMnorm_las_plot/p1301'
+tls_las_folder <- 'data/las/tls'
 
-als_las_folder <- 'D:/c1 - Pepperwood/c1_ALS_normplot/p1301'
+# als_las_folder <- 'D:/c1 - Pepperwood/c1_ALS_normplot/p1301'
+als_las_folder <- 'data/las/als'
 
 uas_las_folder <-  'D:/c1 - Pepperwood/c1_ALS_normplot/p1301'
   
 zeb_las_folder <-  'D:/c1 - Pepperwood/c1_ALS_normplot/p1301'
 
-
 vpp_fig_output <- 'D:/Analyses/p1301 figures'
 
-# ======================== Initiate file name for loop =========================
-# Current state: Randomly picks one of the TLS files and does not loop
+high_plot <- 1301
 
-#file_name <- tls_las_files[ceiling(runif(1, min = 0, max = length(tls_las_files)))]
+medium_plot <- 1303
+  
+low_plot <- 1304
 
-for (file_name in tls_las_files) {
-  # ================================ Read in files ===============================
-  
-  campaign <- str_extract(file_name, '(?<=c)[:digit:]') %>%
-    as.numeric()
-  plot <- str_extract(file_name, '(?<=p)[:digit:]+') %>%
-    as.numeric()
-  
-  message('processing campaign ', campaign, ' plot ', plot)
-  
-  als_file <- list.files(
-    als_las_folder,
-    pattern = glue('c{campaign}.+als.+p{plot}'),
-    full.names = TRUE
+eight_plot <- 1306
+
+window_size <- 5
+
+# ============================== ggplot theme set ==============================
+
+theme_set(
+  theme(
+    text = element_text(family = 'serif', face = 'plain'),
+    axis.title = element_text(size = 16),
+    axis.text = element_text(size = 14),
+    line = element_line(size = 1),
+    axis.line = element_line(),
+    panel.background = element_rect(color = 'white'),
+    legend.title = element_text(size = 16),
+    legend.text = element_text(size = 14),
+    legend.key = element_blank(),
+    legend.spacing = unit(0, "cm"),
+    legend.margin = margin(0, 5, 0, 5)
   )
+)
+
+# ======================== Generate high plot =========================
+
+z <- tibble(
+  Z = as.numeric(),
+  n = as.numeric(),
+  p = as.numeric(),
+  p_smooth = as.numeric(),
+  method = as.character(),
+  plot = as.character()
+)
+
+transect <- tibble(
+  X = as.numeric(),
+  Z = as.numeric(),
+  method = as.character(),
+  plot = as.character()
+)
+
+for (plot_type in c('high_plot', 'medium_plot', 'low_plot', 'eight_plot')) {
   
-  tls_file <- list.files(
-    tls_las_folder,
-    pattern = glue('c{campaign}.+tls.+p{plot}'),
-    full.names = TRUE
-  )
-  
-  tls_file <- tls_file %>%
-    readLAS(select = '')
-  
-  if (length(als_file) == 0) {
-    als_file = NULL
-  } else {
-    als_file <- als_file %>%
-      readLAS(select = '')
+  if (plot_type == 'high_plot') {
+    plot = high_plot
+  } else if (plot_type == 'medium_plot') {
+    plot = medium_plot
+  } else if (plot_type == 'low_plot') {
+    plot = low_plot
+  } else if (plot_type == 'eight_plot') {
+    plot = eight_plot
   }
   
-  # rm(file_name, tls_las_files, tls_las_folder, als_las_folder)
+  # TLS
+  tls <- list.files(tls_las_folder,
+               pattern = glue('p{plot}'),
+               full.names = TRUE) %>%
+    readLAS(select = '')
   
+  p_min <- as.numeric(tls@bbox[, 1])
+  p_max <- as.numeric(tls@bbox[, 2])
+  
+  tls_transect <- clip_transect(
+    tls,
+    p1 = p_min,
+    p2 = p_max,
+    width = 3
+  )
+  
+  tls_transect <- tls_transect@data %>%
+    select(X, Z) %>%
+    add_column(method = 'TLS-Riegl',
+               plot = plot_type)
+  
+  tls_z <- tls@data %>%
+    mutate(Z = round(Z, digits = 1)) %>%
+    group_by(Z) %>%
+    summarize(n = n()) %>%
+    filter(Z > 0.5) %>%
+    mutate(p = n/sum(n, na.rm = TRUE)*100) %>%
+    add_column(method = 'TLS-Riegl',
+               plot = plot_type) %>%
+    mutate(p_smooth = data.table::frollmean(
+      x = p,
+      n = window_size,
+      align = 'center'))
+  
+  rm(tls)
+  
+  
+  # ZEB
+  zeb <- list.files(zeb_las_folder,
+               pattern = glue('p{plot}'),
+               full.names = TRUE) %>%
+    readLAS(select = '')
+
+  zeb_transect <- clip_transect(
+    zeb,
+    p1 = p_min,
+    p2 = p_max,
+    width = 3
+  )
+
+  zeb_transect <- zeb_transect@data %>%
+    select(X, Z) %>%
+    add_column(method = 'TLS-ZEB')
+
+  zeb_z <- zeb@data %>%
+    mutate(Z = round(Z, digits = 1)) %>%
+    group_by(Z) %>%
+    summarize(n = n()) %>%
+    filter(Z > 0.5) %>%
+    mutate(p = n/sum(n, na.rm = TRUE)*100) %>%
+    add_column(method = 'TLS-ZEB') %>%
+    mutate(p_smooth = data.table::frollmean(
+      x = p,
+      n = window_size,
+      align = 'center'))
+
+  rm(zeb)
+  
+  # UAS
+  uas <- list.files(uas_las_folder,
+               pattern = glue('p{plot}'),
+               full.names = TRUE) %>%
+    readLAS(select = '')
+
+  uas_transect <- clip_transect(
+    uas,
+    p1 = p_min,
+    p2 = p_max,
+    width = 3
+  )
+
+  uas_transect <- uas_transect@data %>%
+    select(X, Z) %>%
+    add_column(method = 'UAS',
+               plot = plot_type)
+
+  uas_z <- uas@data %>%
+    mutate(Z = round(Z, digits = 1)) %>%
+    group_by(Z) %>%
+    summarize(n = n()) %>%
+    filter(Z > 0.5) %>%
+    mutate(p = n/sum(n, na.rm = TRUE)*100) %>%
+    add_column(method = 'UAS',
+               plot = plot_type) %>%
+    mutate(p_smooth = data.table::frollmean(
+      x = p,
+      n = window_size,
+      align = 'center'))
+
+  rm(uas)
 
   
-  # ============================== ggplot theme set ===============================
-  
-  theme_set(
-    theme(
-      text = element_text(family = 'serif', face = 'plain'),
-      axis.title = element_text(size = 16),
-      axis.text = element_text(size = 14),
-      line = element_line(size = 1),
-      axis.line = element_line(),
-      panel.background = element_rect(color = 'white'),
-      legend.title = element_text(size = 16),
-      legend.text = element_text(size = 14),
-      legend.key = element_blank(),
-      legend.spacing = unit(0, "cm"),
-      legend.margin = margin(0, 5, 0, 5)
-    )
+  # ALS
+  als <- list.files(als_las_folder,
+               pattern = glue('p{plot}'),
+               full.names = TRUE) %>%
+    readLAS(select = '')
+
+  als_transect <- clip_transect(
+    als,
+    p1 = p_min,
+    p2 = p_max,
+    width = 3
   )
   
-  # ===================== Plot vertical structure of voxels ======================
+  als_transect <- als_transect@data %>%
+    select(X, Z) %>%
+    add_column(method = 'ALS',
+               plot = plot_type)
   
-  n_cell_tls = max(tls_voxel$x, na.rm = TRUE) * max(tls_voxel$y, na.rm = TRUE) / resolution ^
-    2
+  als_z <- als@data %>%
+    mutate(Z = round(Z, digits = 1)) %>%
+    group_by(Z) %>%
+    summarize(n = n()) %>%
+    filter(Z > 0.5) %>%
+    mutate(p = n/sum(n, na.rm = TRUE)*100) %>%
+    add_column(method = 'ALS',
+               plot = plot_type) %>%
+    mutate(p_smooth = data.table::frollmean(
+      x = p,
+      n = window_size,
+      align = 'center'))
   
-  tls_vpp <- tls_voxel %>%
-    group_by(z) %>%
-    summarize(n_voxel = n(),
-              p_voxel = n() / n_cell_tls)
+  rm(als)
+
+  transect <- transect %>%
+    add_row(tls_transect) %>%
+    add_row(als_transect) %>%
+    add_row(zeb_transect) %>%
+    add_row(uas_transect)
   
-  n_cell_als = max(als_voxel$x, na.rm = TRUE) * max(als_voxel$y, na.rm = TRUE) / resolution ^
-    2
-  
-  als_vpp <- als_voxel %>%
-    group_by(z) %>%
-    summarize(n_voxel = n(),
-              p_voxel = n() / n_cell_als)
-  
-  # =================== Rolling average to smooth distribution ===================
-  
-  tls_vpp <- tls_vpp %>%
-    mutate(
-      p_smooth = data.table::frollmean(
-        x = p_voxel,
-        n = rolling_window_size / resolution,
-        align = 'center'
-      )
-    )
-  
-  als_vpp <- als_vpp %>%
-    mutate(
-      p_smooth = data.table::frollmean(
-        x = p_voxel,
-        n = rolling_window_size / resolution,
-        align = 'center'
-      )
-    )
-  
-  vpp_plot <- ggplot() +
-    geom_vline(
-      mapping = aes(xintercept = 0.05),
-      linetype = 'dashed',
-      color = 'grey80',
-      size = 1
-    ) +
-    geom_vline(
-      mapping = aes(xintercept = 0.1),
-      linetype = 'dashed',
-      color = 'grey80',
-      size = 1
-    ) +
-    #geom_path(
-    #  data = als_vpp %>%
-    #    arrange(z),
-    #  mapping = aes(y = z,
-    #                x = p_smooth,
-    #                color = 'firebrick'),
-    #  size = 1.5,
-    # ) +
-    geom_path(
-      data = tls_vpp %>%
-        arrange(z),
-      mapping = aes(y = z,
-                    x = p_smooth,
-                    color = 'black'),
-      size = 1.5
-    ) +
-    labs(y = 'Height (m)',
-         x = 'Percent voxel coverage') +
-    scale_color_identity(
-      name = glue('Campaign {campaign} plot {plot}'),
-      breaks = c('firebrick', 'black'),
-      labels = c('ALS', 'TLS'),
-      guide = "legend"
-    ) +
-    theme(legend.position = c(1, 1),
-          legend.justification = c(1, 1))
-  
-  vpp_plot
-  
-  ggsave(
-    glue('{vpp_fig_output}/c{campaign}_p{plot}_vpp.png'),
-    width = 4.5,
-    height = 4.5,
-    units = 'in',
-    dpi = 700
-    
-  )
+  z <- z %>%
+    add_row(tls_z) %>%
+    add_row(als_z) %>%
+    add_row(zeb_z) %>%
+    add_row(uas_z)
   
 }
+
+
+
+
+# Plot data
+
+transect_plot <-
+  ggplot(data = transect,
+         mapping = aes(x = X, y = Z, color = method, size = method)) +
+  geom_point() +
+  coord_equal() +
+  scale_size_manual(values = c(2, 0.5)) +
+  
+
+z_plot <-
+  ggplot(data = z %>% 
+           filter(plot == 'high_plot') %>%
+           arrange(Z),
+         mapping = aes(x = p_smooth, y = Z, color = method)) +
+  geom_path()
+
+z_plot
+
+
+tls_transect <-
+  ggplot(data = transect %>%
+           filter(method == 'TLS-Riegl') %>%
+           filter(plot == 'high_plot') %>%
+           sample_n(1000000),
+         mapping = aes(x = X, y = Z)) +
+  geom_point(size = 0.5) +
+  coord_equal()
+
+tls_transect
+
+
 # ==============================================================================
