@@ -66,7 +66,7 @@ banner_data <- read_csv('D:/Analyses/Ladder fuels-airtable.csv')
 
 
 # out_file <- 'data/voxel_ladder-fuels.csv'
-out_file <- 'D:/Analyses/output/c6_ladder-fuels_metrics_uas_210127.csv'
+out_file <- 'D:/Analyses/output/c6_ladder-fuels_metrics_uas_210129_2.csv'
 
 # ============ Compute density based ladder fuels metrics for TLS data ===========
 
@@ -77,7 +77,6 @@ tls_combine <- tibble(
   tls_ladder_fuel_1to2 = numeric(),
   tls_ladder_fuel_1to3 = numeric(),
   tls_ladder_fuel_1to4 = numeric(),
-  tls_ladder_fuel_1to5 = numeric(),
   tls_ladder_fuel_7to8 = numeric()
 )
 
@@ -99,7 +98,6 @@ for (tls_file in tls_las_files) {
       tls_ladder_fuel_1to2 = sum(Z > 1 & Z <= 2) / sum(Z <= 2),
       tls_ladder_fuel_1to3 = sum(Z > 1 & Z <= 3) / sum(Z <= 3),
       tls_ladder_fuel_1to4 = sum(Z > 1 & Z <= 4) / sum(Z <= 4),
-      tls_ladder_fuel_1to5 = sum(Z > 1 & Z <= 5) / sum(Z <= 5),
       tls_ladder_fuel_7to8 = sum(Z > 7 & Z <= 8) / sum(Z <= 8)
     ) %>%
     add_column(campaign, plot, .before = 1)
@@ -140,7 +138,6 @@ for (als_file in als_las_files) {
       als_ladder_fuel_1to2 = sum(Z > 1 & Z <= 2) / sum(Z <= 2),
       als_ladder_fuel_1to3 = sum(Z > 1 & Z <= 3) / sum(Z <= 3),
       als_ladder_fuel_1to4 = sum(Z > 1 & Z <= 4) / sum(Z <= 4),
-      als_ladder_fuel_1to5 = sum(Z > 1 & Z <= 5) / sum(Z <= 5),
       als_ladder_fuel_7to8 = sum(Z > 7 & Z <= 8) / sum(Z <= 8)
     ) %>%
     add_column(campaign, plot, .before = 1)
@@ -177,11 +174,10 @@ for (uav_file in uav_las_files) {
   uav_metric <- as_tibble(uav_las$Z) %>% 
     rename(Z='value') %>%
     summarize(
-      uav_ladder_fuel_1to2 = sum(Z > 1 & Z <= 2) / sum(uav_las$Z> 0 & uav_las$Z <= 2),
-      uav_ladder_fuel_1to3 = sum(Z > 1 & Z <= 3) / sum(uav_las$Z > 0 & uav_las$Z <= 3),
-      uav_ladder_fuel_1to4 = sum(Z > 1 & Z <= 4) / sum(uav_las$Z > 0 & uav_las$Z <= 4),
-      uav_ladder_fuel_1to5 = sum(Z > 1 & Z <= 5) / sum(uav_las$Z > 0 & uav_las$Z <= 5),
-      uav_ladder_fuel_7to8 = sum(Z > 7 & Z <= 8) / sum(uav_las$Z > 0 & uav_las$Z <= 8)
+      uav_ladder_fuel_1to2 = sum(uav_las$Z > 1 & uav_las$Z <= 2) / sum(uav_las$Z <= 2),
+      uav_ladder_fuel_1to3 = sum(uav_las$Z > 1 & uav_las$Z <= 3) / sum(uav_las$Z <= 3),
+      uav_ladder_fuel_1to4 = sum(uav_las$Z > 1 & uav_las$Z <= 4) / sum(uav_las$Z <= 4),
+      uav_ladder_fuel_7to8 = sum(uav_las$Z > 7 & uav_las$Z <= 8) / sum(uav_las$Z <= 8)
     ) %>%
     add_column(campaign, plot, .before = 1)
   
@@ -221,7 +217,6 @@ for (zeb_file in zeb_las_files) {
       zeb_ladder_fuel_1to2 = sum(Z > 1 & Z <= 2) / sum(Z <= 2),
       zeb_ladder_fuel_1to3 = sum(Z > 1 & Z <= 3) / sum(Z <= 3),
       zeb_ladder_fuel_1to4 = sum(Z > 1 & Z <= 4) / sum(Z <= 4),
-      zeb_ladder_fuel_1to5 = sum(Z > 1 & Z <= 5) / sum(Z <= 5),
       zeb_ladder_fuel_7to8 = sum(Z > 7 & Z <= 8) / sum(Z <= 8)
     ) %>%
     add_column(campaign, plot, .before = 1)
